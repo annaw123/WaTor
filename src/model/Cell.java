@@ -7,7 +7,7 @@ public class Cell {
     private Creature creature;
 
     // CONSTRUCTOR
-    Cell(int row, int col, Grid grid) {
+    Cell(int row, int col) {
         this.row = row;
         this.col = col;
         this.creature = null;

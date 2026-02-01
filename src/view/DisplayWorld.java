@@ -20,7 +20,7 @@ public class DisplayWorld extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g); // Clears the screen
 
-        Cell[][] cells = gridModel.getGrid();
+        Cell[][] cells = gridModel.getCells();
 
         // Loop through every cell in the grid
         for (int x = 0; x < cells.length; x++) {
