@@ -1,66 +1,63 @@
 package model;
 import java.awt.Color;
+import java.util.List;
+import java.util.Random;
 
 public abstract class Creature {
-    private Color colour;
-    private boolean hasMoved;
+    private final Color colour;
     private boolean isAlive;
     private int chrononsSurvived;
     private final int chrononsToReproduce;
 
-    Creature(Color colour) {
+    Creature(Color colour, int chrononsToReproduce) {
         this.colour = colour;
         this.chrononsSurvived = 0;
-        this.chrononsToReproduce = 5; // Fish breed every 5 turns (overridden in Shark)
-        this.isAlive = true; // Creatures start alive!
+        this.chrononsToReproduce = chrononsToReproduce;
+        this.isAlive = true;
     }
 
+    // SETTERS & GETTERS
     public Color getColour() {
         return colour;
     }
 
-    public void setColour(Color colour) {
-        this.colour = colour;
-    }
-
-    public boolean hasMoved() {
-        return hasMoved;
-    }
-
-    public void setMoved(boolean hasMoved) {
-        this.hasMoved = hasMoved;
-    }
-
-    public boolean isAlive() {
-        return isAlive;
-    }
+    public boolean getAlive() { return isAlive; }
 
     public void setAlive(boolean alive) {
         isAlive = alive;
     }
 
-    public int getChrononsSurvived() {
-        return chrononsSurvived;
-    }
-
-    public void setChrononsSurvived(int chrononsSurvived) {
-        this.chrononsSurvived = chrononsSurvived;
-    }
-
-    public void incrementChrononsSurvived() {
+    // HELPER METHODS
+    protected void incrementChrononsSurvived() {
         this.chrononsSurvived++;
     }
 
-    public int getChrononsToReproduce() {
-        return chrononsToReproduce;
+    protected Cell chooseEmpty(List<Cell> neighbours, Cell exclude) {
+        List<Cell> emptyNeighbours = neighbours.stream()
+                .filter(Cell::isEmpty)
+                .filter(c -> c != exclude)
+                .toList();
+        return emptyNeighbours.isEmpty() ? null : emptyNeighbours.get(new Random().nextInt(emptyNeighbours.size()));
     }
 
-    public abstract void act(Grid grid, int x, int y);
-    public abstract boolean move(Grid grid, int x, int y);
+    protected boolean canReproduce() {
+        return chrononsSurvived > 0 &&
+                chrononsSurvived % chrononsToReproduce == 0;
+    }
+
+
+    // CREATURE ACTIONS
+    public abstract Action act(List<Cell> neighbours, Cell currentCell);
+    public abstract Cell move(List<Cell> neighbours, Cell currentCell);
     public abstract void eat();
-    public abstract void reproduce(Grid grid, int x, int y);
-    public void die(Grid grid, int x, int y) {
-        isAlive = false;
-        grid.getCells()[x][y].setCreature(null);
-    };
+    public abstract Creature reproduce();
+    public Action die(Cell currentCell) {
+        return new Action(
+                this,
+                currentCell,
+                currentCell,
+                true,
+                null, null
+        );
+    }
 }

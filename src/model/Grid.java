@@ -1,11 +1,14 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Grid {
     private Cell[][] cells;
     private final int width;
     private final int height;
+    private int fishCount;
+    private int sharkCount;
 
     public Grid(int width, int height) {
         this.width = width;
@@ -13,8 +16,10 @@ public class Grid {
         this.cells = setUpGridRandomly();
     }
 
-    public Cell[][] setUpGridRandomly() {
+    private Cell[][] setUpGridRandomly() {
         cells = new Cell[width][height];
+        fishCount = 0;
+        sharkCount = 0;
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -22,8 +27,11 @@ public class Grid {
                 double choice = Math.random();
                 if (choice < 0.25) {
                     cells[x][y].setCreature(new Fish());
-                } else if (choice > 0.75) {
+                    fishCount++;
+                }
+                else if (choice > 0.75) {
                     cells[x][y].setCreature(new Shark());
+                    sharkCount++;
                 }
             }
         }
@@ -34,19 +42,14 @@ public class Grid {
         return cells;
     }
 
-    public void setGridCell(int x, int y, Creature creature) {
-        cells[x][y].setCreature(creature);
-    }
-
-    public ArrayList<Cell> getNeighbours(int x, int y) {
+    private ArrayList<Cell> getCellNeighbours(int x, int y) {
         ArrayList<Cell> neighbours = new ArrayList<>();
 
-        // Offset pairs: {dx, dy} for Up, Down, Left, Right
+        // dx dy directions
         int[][] directions = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
 
         for (int[] dir : directions) {
-            // Calculate new coordinate with Wrapping (Modulo Arithmetic)
-            // (x + dx + width) % width handles negative numbers correctly
+            // can wrap round the edge of the grid (toroidal world)
             int targetX = (x + dir[0] + width) % width;
             int targetY = (y + dir[1] + height) % height;
             neighbours.add(cells[targetX][targetY]);
@@ -55,46 +58,65 @@ public class Grid {
     }
 
     public void update() {
-
-        // PASS 1: Reset flags
-        // We must mark everyone as "not moved" before the turn starts
+        List<Action> actions = new ArrayList<>();
+        
+        // 1. collect actions from all creatures
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                if (cells[x][y].getCreature() != null) {
-                    cells[x][y].getCreature().setMoved(false);
-                }
-            }
-        }
-
-        // PASS 2: Move everyone
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-
-                // Get the creature at this spot
                 Creature c = cells[x][y].getCreature();
-
-                // Only act if:
-                // 1. There is a creature here
-                // 2. It hasn't already moved this turn
-                if (c != null && !c.hasMoved()) {
-                    c.act(this, x, y);
+                if (c != null) {
+                    List<Cell> neighbours = getCellNeighbours(x, y);
+                    Cell currentCell = cells[x][y];
+                    Action action = c.act(neighbours, currentCell);
+                    actions.add(action);
                 }
             }
         }
-    }
 
-    // In Grid.java
-    public int[] getStats() {
-        int fishCount = 0;
-        int sharkCount = 0;
+        // 2. Apply actions
+        for (Action action : actions) {
+            Cell oldCell = action.originalPosition();
+            if (oldCell == null) continue; // actor might have died already e.g. preyed on fish
+            if (oldCell.getCreature() != action.actor()) continue; // actor has moved or been eaten
 
-        // Efficiently count during a scan (or maintain a running count to be faster)
+            // handle death
+            if (action.shouldDie()) {
+                oldCell.setCreature(null);
+                continue;
+            }
+
+            // handle movement
+            Cell newCell = action.newPosition();
+            if (newCell != null && newCell != oldCell) {
+                Creature target = newCell.getCreature();
+                boolean canMove = target == null || (action.actor() instanceof Shark && target instanceof Fish);
+                if (!canMove) {
+                    continue;
+                }
+                newCell.setCreature(oldCell.getCreature());
+                oldCell.setCreature(null);
+            }
+
+            // handle reproduction
+            Creature child = action.child();
+            Cell childCell = action.childPosition();
+            if (child != null && childCell != null && childCell.getCreature() == null) {
+                childCell.setCreature(child);
+            }
+        }
+
+        // update stats
+        fishCount = 0;
+        sharkCount = 0;
         for (Cell[] row : cells) {
             for (Cell c : row) {
                 if (c.getCreature() instanceof Fish) fishCount++;
                 else if (c.getCreature() instanceof Shark) sharkCount++;
             }
         }
+    }
+
+    public int[] getStats() {
         return new int[]{fishCount, sharkCount};
     }
 }

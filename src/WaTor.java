@@ -3,7 +3,7 @@ import view.DisplayWorld;
 import view.GraphPanel;
 
 import javax.swing.JFrame;
-import javax.swing.Timer; // Import this!
+import javax.swing.Timer;
 import java.awt.*;
 
 public class WaTor {
