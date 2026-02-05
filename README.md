@@ -40,6 +40,9 @@ and the Grid has Creatures, but this seems messy. Other alternatives were associ
 each creature and it then updates it directly. Decided on an Action class (Command Design Pattern?) so that Creatures
 return their desired action and the grid then actually executes it - but not sure if this is standard.
 
+The model part (how the creatures move) has the following UML diagram:
+![img.png](img.png)
+
 ## Possible extensions
 
 1. Adding in more species - overarching Predator / Prey interface or class that different creatures can then extend.

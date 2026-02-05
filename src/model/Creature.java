@@ -48,10 +48,10 @@ public abstract class Creature {
 
     // CREATURE ACTIONS
     public abstract Action act(List<Cell> neighbours, Cell currentCell);
-    public abstract Cell move(List<Cell> neighbours, Cell currentCell);
-    public abstract void eat();
-    public abstract Creature reproduce();
-    public Action die(Cell currentCell) {
+    protected abstract Cell move(List<Cell> neighbours, Cell currentCell);
+    protected abstract void eat();
+    protected abstract Creature reproduce();
+    protected Action die(Cell currentCell) {
         return new Action(
                 this,
                 currentCell,

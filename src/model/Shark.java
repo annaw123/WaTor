@@ -14,7 +14,7 @@ public class Shark extends Creature {
 
     // HELPER METHODS
     // this could be moved to Creature or overarching Predator class if expanded
-    protected Cell findPrey(List<Cell> neighbours) {
+    private Cell findPrey(List<Cell> neighbours) {
         List<Cell> prey = neighbours.stream()
                 .filter(c -> c.getCreature() instanceof Fish)
                 .toList();
@@ -52,7 +52,7 @@ public class Shark extends Creature {
     }
 
     @Override
-    public Cell move(List<Cell> neighbours, Cell currentCell) {
+    protected Cell move(List<Cell> neighbours, Cell currentCell) {
         // hunt
         Cell preyPosition = findPrey(neighbours);
         if (preyPosition != null) {
@@ -64,13 +64,13 @@ public class Shark extends Creature {
     }
 
     @Override
-    public Creature reproduce() {
+    protected Creature reproduce() {
         boolean shouldReproduce = canReproduce();
         return shouldReproduce ? new Shark() : null;
     }
 
     @Override
-    public void eat() {
+    protected void eat() {
         energy += 3;
     }
 }
